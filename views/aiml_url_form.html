@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Insert AIML URL</title>
+  <style>
+    body { 
+      font-family: sans-serif; 
+      margin: 2rem; 
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h2 { 
+      text-align: center; 
+      color: #333;
+      margin-bottom: 2rem;
+    }
+    form { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 1rem; 
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    label {
+      font-weight: bold;
+      color: #555;
+    }
+    input, select { 
+      padding: 0.75rem; 
+      font-size: 1rem; 
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      transition: border-color 0.3s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+    }
+    button { 
+      padding: 0.75rem; 
+      font-size: 1rem; 
+      background: #007bff; 
+      color: white; 
+      border: none; 
+      cursor: pointer; 
+      border-radius: 4px;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    button:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+    .message {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .loading {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Insert AIML URL</h2>
+    <form id="aimlForm">
+      <div class="form-group">
+        <label for="url">URL:</label>
+        <input 
+          id="url" 
+          name="url" 
+          type="text" 
+          placeholder="http://13.126.236.136:9001/MLConversion" 
+          required 
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="port">Port:</label>
+        <input 
+          id="port" 
+          name="port" 
+          type="text" 
+          placeholder="9001" 
+          required 
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="client_id">Client ID:</label>
+        <input 
+          id="client_id" 
+          name="client_id" 
+          type="number" 
+          placeholder="12" 
+          required 
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="language_id">Language ID:</label>
+        <input 
+          id="language_id" 
+          name="language_id" 
+          type="number" 
+          placeholder="12" 
+          required 
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="type">Type:</label>
+        <select id="type" name="type" required>
+          <option value="1">MLCuration</option>
+          <option value="2">MLConversion</option>
+        </select>
+      </div>
+      
+      <button type="submit" id="submitBtn">Insert URL</button>
+    </form>
+    
+    <div id="message" class="message" style="display: none;"></div>
+  </div>
+
+  <script>
+    document.getElementById('aimlForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('submitBtn');
+      const messageDiv = document.getElementById('message');
+      
+      // Get form data
+      const formData = {
+        url: document.getElementById('url').value,
+        port: document.getElementById('port').value,
+        client_id: parseInt(document.getElementById('client_id').value),
+        language_id: parseInt(document.getElementById('language_id').value),
+        type: parseInt(document.getElementById('type').value)
+      };
+      
+      // Show loading state
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Inserting...';
+      messageDiv.style.display = 'block';
+      messageDiv.className = 'message loading';
+      messageDiv.textContent = 'Inserting URL...';
+      
+      try {
+        const response = await fetch('http://localhost:9003/api/addAimlUrl', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData)
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          messageDiv.className = 'message success';
+          messageDiv.textContent = '✅ URL inserted successfully!';
+          
+          // Reset form
+          document.getElementById('aimlForm').reset();
+        } else {
+          const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+          messageDiv.className = 'message error';
+          messageDiv.textContent = `❌ Error: ${errorData.message || 'Failed to insert URL'}`;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        messageDiv.className = 'message error';
+        messageDiv.textContent = `❌ Network Error: ${error.message}`;
+      } finally {
+        // Reset button state
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Insert URL';
+      }
+    });
+    
+    // Auto-extract port from URL when URL changes
+    document.getElementById('url').addEventListener('input', function(e) {
+      const url = e.target.value;
+      const portInput = document.getElementById('port');
+      
+      if (url) {
+        try {
+          const urlObj = new URL(url.startsWith('http') ? url : `http://${url}`);
+          if (urlObj.port) {
+            portInput.value = urlObj.port;
+          } else {
+            // Default ports
+            portInput.value = urlObj.protocol === 'https:' ? '443' : '80';
+          }
+        } catch (err) {
+          // Invalid URL, don't update port
+        }
+      }
+    });
+  </script>
+</body>
+</html>

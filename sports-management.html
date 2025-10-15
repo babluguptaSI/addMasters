@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .sport-selector {
+            background-color: #e8f4fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .form-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .form-section h3 {
+            color: #2c5aa0;
+            margin-top: 0;
+            border-bottom: 2px solid #2c5aa0;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #2c5aa0;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            background-color: #1e3a73;
+        }
+
+        .load-btn {
+            background-color: #28a745;
+        }
+
+        .load-btn:hover {
+            background-color: #218838;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .note {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: none;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Add Masters</h1>
+            <p>Manage Parent Series, Series, and Matches</p>
+        </div>
+
+        <!-- Environment Selector -->
+        <div class="form-section">
+            <h3>🌐 Environment Selector</h3>
+            <div class="form-group">
+                <label for="environmentSelect">Select Environment:</label>
+                <select id="environmentSelect" onchange="updateEnvironment()">
+                    <option value="prod">Production (mediahub.sportz.io)</option>
+                    <option value="dev">Development (dev-mediahub.sportz.io)</option>
+                </select>
+                <small style="color: #666;">Switch between development and production environments</small>
+            </div>
+        </div>
+
+        <!-- Sport Selector -->
+        <div class="sport-selector">
+            <h3>First, Select Your Sport</h3>
+            <div class="form-group">
+                <label for="globalSportSelect">Select Sport:</label>
+                <select id="globalSportSelect" name="globalSportId" required>
+                    <option value="">Click "Load Sports" to see available sports</option>
+                </select>
+                <button type="button" class="load-btn" onclick="loadSports()">Load Sports</button>
+            </div>
+            <div class="note">
+                <strong>Note:</strong> Please select your sport first. This will be used to filter data for Series and Matches forms.
+            </div>
+        </div>
+
+        <!-- Parent Series Form -->
+        <div class="form-section">
+            <h3>Add Parent Series</h3>
+            <p><strong>Independent Entry:</strong> Parent Series doesn't depend on any other data.</p>
+            
+            <div id="parentSeriesMessage" class="message"></div>
+            <form id="parentSeriesForm" action="https://mediahub.sportz.io/api/addParentSeries" method="post">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="parentSeriesName">Parent Series Name:</label>
+                        <input type="text" id="parentSeriesName" name="parent_series_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="parentSeriesSportId">Sport ID:</label>
+                        <input type="number" id="parentSeriesSportId" name="sport_id" min="1" readonly required>
+                        <small style="color: #666;">Auto-filled from sport selection above</small>
+                    </div>
+                </div>
+                
+                <button type="submit">Add Parent Series</button>
+            </form>
+        </div>
+
+        <!-- Series Form -->
+        <div class="form-section">
+            <h3>Add Series</h3>
+            <p><strong>Dependent Entry:</strong> Series depends on Parent Series within the same sport.</p>
+            
+            <div id="seriesMessage" class="message"></div>
+            <form id="seriesForm" action="https://mediahub.sportz.io/api/addSeries" method="post">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="seriesName">Series Name:</label>
+                        <input type="text" id="seriesName" name="series_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="seriesSportId">Sport ID:</label>
+                        <input type="number" id="seriesSportId" name="sport_id" min="1" readonly required>
+                        <small style="color: #666;">Auto-filled from sport selection above</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="parentSeriesSelect">Parent Series:</label>
+                    <select id="parentSeriesSelect" name="parent_series_id" required>
+                        <option value="">First select Sport above and click "Load Parent Series"</option>
+                    </select>
+                    <button type="button" class="load-btn" onclick="loadParentSeries()">Load Parent Series</button>
+                </div>
+                
+                <button type="submit">Add Series</button>
+            </form>
+        </div>
+
+        <!-- Matches Form -->
+        <div class="form-section">
+            <h3>Add Match</h3>
+            <p><strong>Dependent Entry:</strong> Matches depend on Series data.</p>
+            
+            <div id="matchMessage" class="message"></div>
+            <form id="matchForm" action="https://mediahub.sportz.io/api/addMatch" method="post">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="matchName">Match Name:</label>
+                        <input type="text" id="matchName" name="match_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="matchSportId">Sport ID:</label>
+                        <input type="number" id="matchSportId" name="sport_id" min="1" readonly required>
+                        <small style="color: #666;">Auto-filled from sport selection above</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="matchDate">Match Date & Time:</label>
+                        <input type="datetime-local" id="matchDate" name="matchDateInput" required>
+                        <small style="color: #666;">If no time is specified, it will default to 00:00:00</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="seriesSelect">Series:</label>
+                    <select id="seriesSelect" name="series_id" required>
+                        <option value="">First select Sport above and click "Load Series"</option>
+                    </select>
+                    <button type="button" class="load-btn" onclick="loadSeries()">Load Series</button>
+                </div>
+                
+                <button type="submit">Add Match</button>
+            </form>
+        </div>
+
+        <!-- Instructions -->
+        <div class="form-section">
+            <h3>Instructions</h3>
+            <ol>
+                <li><strong>Select Sport:</strong> Click "Load Sports" to see available sports, then select one.</li>
+                <li><strong>Add Parent Series:</strong> This is independent - just provide name (sport ID is auto-filled).</li>
+                <li><strong>Add Series:</strong> 
+                    <ul>
+                        <li>Enter series name (sport ID is auto-filled)</li>
+                        <li>Click "Load Parent Series" to populate the dropdown with parent series for your sport</li>
+                        <li>Select the appropriate parent series</li>
+                    </ul>
+                </li>
+                <li><strong>Add Matches:</strong>
+                    <ul>
+                        <li>Enter match name</li>
+                        <li>Set match date and time (defaults to current date/time)</li>
+                        <li>Click "Load Series" to populate the dropdown with series for your sport</li>
+                        <li>Select the appropriate series</li>
+                    </ul>
+                </li>
+                <li><strong>Add AIML URL:</strong>
+                    <ul>
+                        <li>Enter URL without http:// (e.g., "13.202.75.85:9007/MLConversion")</li>
+                        <li>Select type: Curation (1) or Conversion (2)</li>
+                        <li>Enter client ID and language ID</li>
+                        <li>Enter language name for display purposes</li>
+                    </ul>
+                </li>
+            </ol>
+            
+            <div class="note">
+                <strong>API Endpoints Available:</strong><br>
+                • GET /api/Sports/all - Get all available sports<br>
+                • GET /api/ParentSeries/by-sport/{sportId} - Get parent series by sport<br>
+                • GET /api/Series/by-sport/{sportId} - Get series by sport<br>
+                • GET /WeatherForecast/matches/by-series/{seriesId} - Get matches by series<br>
+                • POST endpoints for adding data to each table
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Environment configuration
+        const environments = {
+            dev: 'https://dev-mediahub.sportz.io',
+            prod: 'https://mediahub.sportz.io'
+        };
+
+        // Get current base URL based on environment selection
+        function getBaseUrl() {
+            const environmentSelect = document.getElementById('environmentSelect');
+            const selectedEnv = environmentSelect.value;
+            return environments[selectedEnv];
+        }
+
+        // Update all form actions and reinitialize when environment changes
+        function updateEnvironment(showAlert = true) {
+            const baseUrl = getBaseUrl();
+            
+            // Update form actions
+            document.getElementById('parentSeriesForm').action = `${baseUrl}/api/addParentSeries`;
+            document.getElementById('seriesForm').action = `${baseUrl}/api/addSeries`;
+            document.getElementById('matchForm').action = `${baseUrl}/api/addMatch`;
+            
+            // Clear all dropdowns when environment changes
+            document.getElementById('globalSportSelect').innerHTML = '<option value="">Select a Sport</option>';
+            document.getElementById('parentSeriesSelect').innerHTML = '<option value="">First click "Load Parent Series"</option>';
+            document.getElementById('seriesSelect').innerHTML = '<option value="">First click "Load Series"</option>';
+            
+            // Show environment change message (only if manually triggered)
+            if (showAlert) {
+                alert(`Environment switched to: ${getBaseUrl()}`);
+            }
+        }
+
+        // Auto-populate sport ID fields when global sport selection changes
+        document.getElementById('globalSportSelect').addEventListener('change', function() {
+            const sportId = this.value;
+            document.getElementById('parentSeriesSportId').value = sportId;
+            document.getElementById('seriesSportId').value = sportId;
+            document.getElementById('matchSportId').value = sportId;
+            
+            // Clear dropdowns when sport changes
+            document.getElementById('parentSeriesSelect').innerHTML = '<option value="">First click "Load Parent Series"</option>';
+            document.getElementById('seriesSelect').innerHTML = '<option value="">First click "Load Series"</option>';
+        });
+
+        // Load sports from the database
+        async function loadSports() {
+    const select = document.getElementById('globalSportSelect');
+    select.innerHTML = '<option value="">Loading sports...</option>';
+   
+    try {
+        const response = await fetch(`${getBaseUrl()}/api/getAllSports`);
+        console.log(response);
+       
+        if (response.ok) {
+            const sports = await response.json();
+            console.log('sports data:', sports);
+            
+            // Access the array from the nested structure
+            const sportsArray = sports.data.value;
+            
+            if (Array.isArray(sportsArray)) {
+                select.innerHTML = '<option value="">Select a Sport</option>';
+                sportsArray.forEach(sport => {
+                    const option = document.createElement('option');
+                    option.value = sport.sport_id;
+                    option.textContent = `${sport.sport_name} (ID: ${sport.sport_id})`;
+                    select.appendChild(option);
+                });
+            } else {
+                console.error('Sports data is not an array:', sportsArray);
+                select.innerHTML = '<option value="">Invalid data format</option>';
+            }
+        } else {
+            select.innerHTML = '<option value="">Failed to fetch sports</option>';
+        }
+    }
+    catch (error) {
+        select.innerHTML = '<option value="">Error loading sports</option>';
+        console.error('Error loading sports:', error);
+    }
+}
+
+        // Load parent series based on sport ID
+        async function loadParentSeries() {
+            const sportId = document.getElementById('globalSportSelect').value;
+            if (!sportId) {
+                alert('Please select a Sport first.');
+                return;
+            }
+
+            const select = document.getElementById('parentSeriesSelect');
+            select.innerHTML = '<option value="">Loading parent series...</option>';
+            
+            try {
+                const response = await fetch(`${getBaseUrl()}/api/getParentSeries?sport_id=${sportId}`);
+                if (response.ok) {
+                    const parentSeries = await response.json();
+                    select.innerHTML = '<option value="">Select a Parent Series</option>';
+                    const parentSeriesArray = parentSeries.data.value;
+                    parentSeriesArray.forEach(ps => {
+                        const option = document.createElement('option');
+                        option.value = ps.id;
+                        option.textContent = `${ps.name} (ID: ${ps.id})`;
+                        select.appendChild(option);
+                    });
+                    
+                    if (parentSeries.length === 0) {
+                        select.innerHTML = '<option value="">No parent series found for this sport</option>';
+                    }
+                } else {
+                    select.innerHTML = '<option value="">Error loading parent series</option>';
+                    console.error('Failed to load parent series:', response.statusText);
+                }
+            } catch (error) {
+                select.innerHTML = '<option value="">Error loading parent series</option>';
+                console.error('Error loading parent series:', error);
+            }
+        }
+
+        // Load series based on sport ID
+        async function loadSeries() {
+            const sportId = document.getElementById('globalSportSelect').value;
+            if (!sportId) {
+                alert('Please select a Sport first.');
+                return;
+            }
+
+            const select = document.getElementById('seriesSelect');
+            select.innerHTML = '<option value="">Loading series...</option>';
+            
+            try {
+                const response = await fetch(`${getBaseUrl()}/api/getSeries?sport_id=${sportId}`);
+                if (response.ok) {
+                    const series = await response.json();
+                    select.innerHTML = '<option value="">Select a Series</option>';
+                    const seriesArray = series.data.value;
+                    seriesArray.forEach(s => {
+                        const option = document.createElement('option');
+                        option.value = s.id;
+                        option.textContent = `${s.name} (ID: ${s.id})`;
+                        select.appendChild(option);
+                    });
+                    
+                    if (series.length === 0) {
+                        select.innerHTML = '<option value="">No series found for this sport</option>';
+                    }
+                } else {
+                    select.innerHTML = '<option value="">Error loading series</option>';
+                    console.error('Failed to load series:', response.statusText);
+                }
+            } catch (error) {
+                select.innerHTML = '<option value="">Error loading series</option>';
+                console.error('Error loading series:', error);
+            }
+        }
+
+        // Show message function
+        function showMessage(messageId, text, isSuccess) {
+            const messageDiv = document.getElementById(messageId);
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${isSuccess ? 'success' : 'error'}`;
+            messageDiv.style.display = 'block';
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Handle form submissions with AJAX
+        function setupFormHandler(formId, messageId, successMessage) {
+    const form = document.getElementById(formId);
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault(); // Prevent default form submission
+       
+        const button = form.querySelector('button[type="submit"]');
+        const originalText = button.textContent;
+       
+        try {
+            // Show loading state
+            button.textContent = 'Adding...';
+            button.disabled = true;
+            form.classList.add('loading');
+           
+            // Prepare form data and convert to JSON
+            const formData = new FormData(form);
+            const formDataObj = Object.fromEntries(formData.entries());
+            
+           
+
+           
+            // Submit form as JSON
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formDataObj)
+            });
+           
+            if (response.ok) {
+                showMessage(messageId, successMessage, true);
+                form.reset(); // Clear the form
+               
+                // Clear sport ID fields and reset to global selection
+                const sportId = document.getElementById('globalSportSelect').value;
+                if (sportId) {
+                    document.getElementById('parentSeriesSportId').value = sportId;
+                    document.getElementById('seriesSportId').value = sportId;
+                    document.getElementById('matchSportId').value = sportId;
+                }
+            } else {
+                const errorText = await response.text();
+                showMessage(messageId, `Error: ${response.status} - ${errorText}`, false);
+            }
+        } catch (error) {
+            showMessage(messageId, `Error: ${error.message}`, false);
+        } finally {
+            // Reset button state
+            button.textContent = originalText;
+            button.disabled = false;
+            form.classList.remove('loading');
+        }
+    });
+}
+
+        // Setup all form handlers when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize environment on page load (no alert)
+            updateEnvironment(false);
+            
+            setupFormHandler('parentSeriesForm', 'parentSeriesMessage', 'Parent Series added successfully!');
+            setupFormHandler('seriesForm', 'seriesMessage', 'Series added successfully!');
+            setupFormHandler('matchForm', 'matchMessage', 'Match added successfully!');
+            
+            // Set default datetime to current date and time
+            const matchDateInput = document.getElementById('matchDate');
+            if (matchDateInput) {
+                const now = new Date();
+                // Format datetime for datetime-local input (YYYY-MM-DDTHH:MM)
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                
+                matchDateInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            }
+        });
+    </script>
+</body>
+</html>
