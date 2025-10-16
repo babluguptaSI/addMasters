@@ -262,7 +262,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="matchDate">Match Date & Time:</label>
-                        <input type="datetime-local" id="matchDate" name="matchDateInput" required>
+                        <input type="datetime-local" id="matchDate" name="matchDate" required>
                         <small style="color: #666;">If no time is specified, it will default to 00:00:00</small>
                     </div>
                 </div>
@@ -559,8 +559,8 @@
             setupFormHandler('matchForm', 'matchMessage', 'Match added successfully!');
             
             // Set default datetime to current date and time
-            const matchDateInput = document.getElementById('matchDate');
-            if (matchDateInput) {
+            const matchDate = document.getElementById('matchDate');
+            if (matchDate) {
                 const now = new Date();
                 // Format datetime for datetime-local input (YYYY-MM-DDTHH:MM)
                 const year = now.getFullYear();
@@ -569,7 +569,7 @@
                 const hours = String(now.getHours()).padStart(2, '0');
                 const minutes = String(now.getMinutes()).padStart(2, '0');
                 
-                matchDateInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                matchDate.value = `${year}-${month}-${day}T${hours}:${minutes}`;
             }
         });
     </script>
